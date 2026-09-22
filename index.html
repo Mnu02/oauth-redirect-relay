@@ -24,6 +24,7 @@
   <code id="code-value">(reading code…)</code>
   <button id="copy-btn">Copy Code</button>
   <div id="status"></div>
+  <p id="debug" style="font-size:12px;color:#999;word-break:break-all;"></p>
   <script>
     // Plain static redirect target for Oura's OAuth flow. No app-switching
     // or custom URL schemes here — those proved unreliable across iOS
@@ -42,6 +43,10 @@
       codeEl.textContent = "(no code found in URL)"
       copyBtn.style.display = "none"
       statusEl.textContent = "Something went wrong — go back and try logging in again."
+      // Diagnostic: show exactly what Oura actually sent back, since it's
+      // clearly not a plain ?code=... query string in this case.
+      document.getElementById('debug').textContent =
+        "Full URL for debugging: " + window.location.href
     }
 
     copyBtn.addEventListener('click', function () {
