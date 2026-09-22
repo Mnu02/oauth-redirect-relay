@@ -3,36 +3,58 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Continue</title>
+  <title>Your code</title>
   <style>
-    body { font-family: -apple-system, system-ui, sans-serif; text-align: center; padding: 48px 20px; }
-    a.button {
-      display: inline-block; margin-top: 24px; padding: 16px 32px;
-      font-size: 20px; font-weight: 600; color: white; background: #0071e3;
-      border-radius: 12px; text-decoration: none;
-    }
+    body { font-family: -apple-system, system-ui, sans-serif; text-align: center; padding: 40px 20px; }
     p { color: #444; font-size: 16px; }
+    code {
+      display: block; margin: 20px auto; padding: 16px; max-width: 90%;
+      overflow-wrap: break-word; font-size: 18px; background: #f2f2f2;
+      border-radius: 8px; color: #111;
+    }
+    button {
+      margin-top: 16px; padding: 16px 32px; font-size: 20px; font-weight: 600;
+      color: white; background: #0071e3; border: none; border-radius: 12px;
+    }
+    #status { margin-top: 12px; color: #0a0; font-weight: 600; min-height: 24px; }
   </style>
 </head>
 <body>
-  <p>Tap the button below right away — this link expires quickly.</p>
-  <a class="button" id="continue-link" href="#">Continue to Scriptable</a>
+  <p>Switch back to the Scriptable app and paste this code when asked:</p>
+  <code id="code-value">(reading code…)</code>
+  <button id="copy-btn">Copy Code</button>
+  <div id="status"></div>
   <script>
-    // Generic OAuth redirect relay: forwards this page's query string
-    // (e.g. ?code=...&state=...) into a Scriptable URL scheme so iOS hands
-    // control back to the Scriptable app, since many OAuth providers only
-    // accept https redirect URIs and won't accept a custom app URL scheme
-    // directly.
-    //
-    // Deliberately NOT auto-redirecting via window.location: iOS Safari
-    // silently blocks script-triggered navigation into a custom URL scheme
-    // unless it comes from a direct user tap, and the delay while a user
-    // notices nothing happened is enough for a short-lived OAuth code to
-    // expire. A big, immediate, real tap target avoids both problems.
-    var params = window.location.search;
-    var scriptName = "01-oura-auth-setup";
-    var target = "scriptable:///run/" + scriptName + params;
-    document.getElementById("continue-link").href = target;
+    // Plain static redirect target for Oura's OAuth flow. No app-switching
+    // or custom URL schemes here — those proved unreliable across iOS
+    // versions (silently blocked script-triggered navigation, timing races
+    // with short-lived codes). Just show the code as plain, copyable text
+    // and let the user paste it into Scriptable by hand.
+    var match = window.location.search.match(/[?&]code=([^&]+)/)
+    var code = match ? decodeURIComponent(match[1]) : null
+    var codeEl = document.getElementById('code-value')
+    var statusEl = document.getElementById('status')
+    var copyBtn = document.getElementById('copy-btn')
+
+    if (code) {
+      codeEl.textContent = code
+    } else {
+      codeEl.textContent = "(no code found in URL)"
+      copyBtn.style.display = "none"
+      statusEl.textContent = "Something went wrong — go back and try logging in again."
+    }
+
+    copyBtn.addEventListener('click', function () {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(function () {
+          statusEl.textContent = "Copied! Switch to Scriptable now."
+        }, function () {
+          statusEl.textContent = "Copy failed — select the code above manually."
+        })
+      } else {
+        statusEl.textContent = "Select the code above manually and copy it."
+      }
+    })
   </script>
 </body>
 </html>
